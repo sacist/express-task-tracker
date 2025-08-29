@@ -11,7 +11,10 @@
   },
   "imports": {
     "#config/*": "./src/config/*",
-    "#middleware/*": "./src/middleware/*"
+    "#middleware/*": "./src/middleware/*",
+    "#classes/*": "./src/classes/*",
+    "#modules/*": "./src/modules/*",
+    "#errors/*": "./src/errors/*"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +24,7 @@
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.19.0",
     "mongoose": "^8.18.0",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0",

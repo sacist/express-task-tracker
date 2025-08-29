@@ -11,7 +11,10 @@
     "forceConsistentCasingInFileNames": true,
     "paths": {
       "#config/*":["./src/config/*"],
-      "#middleware/*":["./src/middleware/*"]
+      "#middleware/*":["./src/middleware/*"],
+      "#classes/*":["./src/classes/*"],
+      "#modules/*":["./src/modules/*"],
+      "#errors/*":["./src/errors/*"]
     }
   },
   
