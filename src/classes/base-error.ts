@@ -1,10 +1,10 @@
 export interface IErrorsData{
-    code:number
+    code?:number
     text:string
-    data:object
+    data?:object
 }
 export interface IBaseError extends Error{
-    code:number,
+    code?:number,
     data:unknown,
     text:string,
     statusCode:number
