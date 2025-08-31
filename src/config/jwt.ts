@@ -15,6 +15,6 @@ export const jwtRefreshConf:IJwtConf={
 export const jwtAccessConf:IJwtConf={
     secret:process.env.JWT_SECRET_ACCESS as string,
     options:{
-        expiresIn:'1m'
+        expiresIn:'1h'
     }
 }

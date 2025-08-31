@@ -1,4 +1,6 @@
 import { BaseController } from "#classes/base-controller"
+import { UnauthorizedError } from "#errors/unauthorized.error"
+import { IRequestWithUser } from "#middleware/auth.middleware"
 import { UsersService } from "./users.service"
 import z from "zod"
 
@@ -19,5 +21,9 @@ export class UsersController extends BaseController {
     }, async (req) => {
         const user = await this.usersService.createUser(req.body)
         return { message: 'Юзер создан', user }
+    })
+    public getMe=this.run<IRequestWithUser>(null,(req)=>{
+        if(!req.user) throw new UnauthorizedError({text:'Пользователь не авторизован'})
+        return req.user
     })
 }

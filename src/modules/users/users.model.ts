@@ -11,7 +11,8 @@ export interface IUser extends Document {
     password: string,
     role: UserRoles,
     createdAt: Date,
-    updatedAt: Date
+    updatedAt: Date,
+    banned:boolean
 }
 
 const userSchema = new Schema<IUser>({
@@ -36,6 +37,10 @@ const userSchema = new Schema<IUser>({
         type: String,
         enum: UserRoles,
         default: UserRoles.USER
+    },
+    banned:{
+        type:Boolean,
+        default:false
     }
 }, { timestamps: true }
 )

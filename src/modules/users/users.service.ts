@@ -7,6 +7,7 @@ export type UserCreation = Pick<IUser, 'name' | 'password' | 'email'> & {
     passcode?: string
 }
 
+
 export class UsersService {
     async createUser(data: UserCreation) {
         try {
@@ -31,6 +32,5 @@ export class UsersService {
             }
             throw e
         }
-
     }
 }

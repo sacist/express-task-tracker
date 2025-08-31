@@ -1,12 +1,11 @@
 import * as bcrypt from "bcrypt";
-import jwt, { Jwt } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { User, UserRoles } from "../users.model";
 import { UnauthorizedError } from "#errors/unauthorized.error";
 import { jwtRefreshConf, jwtAccessConf } from "#config/jwt";
 import { NotFoundError } from "#errors/not-found.error";
 import { randomUUID } from "crypto";
 import { RefreshToken } from "./tokens.model";
-import { ObjectId } from "mongoose";
 
 interface ILoginReturn{
     accessToken:string,

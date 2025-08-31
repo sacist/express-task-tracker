@@ -1,4 +1,5 @@
 import { ValidationError } from "#errors/validation.error"
+import { IRequestWithUser } from "#middleware/auth.middleware"
 import { Request, Response, NextFunction } from "express"
 import { ZodTypeAny,ZodError } from "zod"
 
@@ -7,17 +8,20 @@ type ValidationSchemas = {
     query?: ZodTypeAny
     params?: ZodTypeAny
 }
+type RunRequest=Request|IRequestWithUser
 
 export abstract class BaseController {
-    protected run = (
-        schemas: ValidationSchemas,
-        handler: (req: Request, res: Response, next: NextFunction) => Promise<any>
+    protected run = <T extends RunRequest=Request> (
+        schemas: ValidationSchemas|null,
+        handler: (req: T, res: Response, next: NextFunction) => any|Promise<any>
     ) => {
-        return async (req: Request, res: Response, next: NextFunction) => {
+        return async (req:T, res: Response, next: NextFunction) => {
             try {
-                if (schemas.body) req.body = schemas.body.parse(req.body)
-                if (schemas.query) req.query = schemas.query.parse(req.query) as any
-                if (schemas.params) req.params = schemas.params.parse(req.params) as any
+                if(schemas){
+                    if (schemas.body) req.body = schemas.body.parse(req.body)
+                    if (schemas.query) req.query = schemas.query.parse(req.query) as any
+                    if (schemas.params) req.params = schemas.params.parse(req.params) as any
+                }
 
                 const result = await handler(req, res, next)
                 res.json({ success: true, data: result })
