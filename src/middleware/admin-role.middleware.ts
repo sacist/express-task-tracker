@@ -5,7 +5,7 @@ import { ForbiddenError } from "#errors/forbidden.error"
 
 export const checkIfAdmin=(req:IRequestWithUser, __:Response, next: NextFunction) => {
     const user=req.user
-    if(user.role!==UserRoles.ADMIN){
+    if(user&&user.role!==UserRoles.ADMIN){
         return next(new ForbiddenError({text:'Недостаточно прав для запроса'}))
     }
     next()

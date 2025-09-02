@@ -2,13 +2,14 @@ import { jwtAccessConf, jwtRefreshConf } from "#config/jwt";
 import { ForbiddenError } from "#errors/forbidden.error";
 import { UnauthorizedError } from "#errors/unauthorized.error";
 import { IAccessTokenPayload, IRefreshTokenPayload } from "#modules/users/auth/auth.service";
-import { RefreshToken } from "#modules/users/auth/tokens.model";
-import { IUser, User } from "#modules/users/users.model";
+import { IUser } from "#modules/users/users.model";
 import { NextFunction,Request,Response } from "express";
 import jwt from 'jsonwebtoken'
+import { userRepository } from "#repositories/user.repository";
+import { tokenRepository } from "#repositories/token.repository";
 
 export interface IRequestWithUser extends Request{
-    user?:IUser
+    user?:IUser,
 }
 export const authMiddleware=async(req:IRequestWithUser,res:Response,next:NextFunction)=>{
     try {
@@ -18,7 +19,7 @@ export const authMiddleware=async(req:IRequestWithUser,res:Response,next:NextFun
 
         const payload=jwt.verify(accessToken,jwtAccessConf.secret) as IAccessTokenPayload
 
-        const user=await User.findById(payload.id).select('-password')
+        const user=await userRepository.findById(payload.id as string)
         if(!user) return next(new UnauthorizedError({text:'Пользователь не найден'}))
         if(user.banned) return next(new ForbiddenError({text:'Пользователь был заблокирован'}))
         
@@ -39,10 +40,10 @@ export const authMiddleware=async(req:IRequestWithUser,res:Response,next:NextFun
         try {
             const refreshPayload=jwt.verify(refreshToken,jwtRefreshConf.secret) as IRefreshTokenPayload
 
-            const dbToken=await RefreshToken.findOne({token_id:refreshPayload.token_id,user_id:refreshPayload.id})
+            const dbToken=await tokenRepository.findByTokenId(refreshPayload.token_id)
             if(!dbToken) return next(new UnauthorizedError({ text: 'Refresh токен недействителен' }))
             
-            const user=await User.findById(refreshPayload.id).select('-password')
+            const user=await userRepository.findById(refreshPayload.id as string)
             if(!user) return next(new UnauthorizedError({text:'Пользователь не найден'}))
             if(user.banned) return next(new ForbiddenError({text:'Пользователь был заблокирован'}))
                   

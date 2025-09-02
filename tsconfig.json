@@ -14,7 +14,8 @@
       "#middleware/*":["./src/middleware/*"],
       "#classes/*":["./src/classes/*"],
       "#modules/*":["./src/modules/*"],
-      "#errors/*":["./src/errors/*"]
+      "#errors/*":["./src/errors/*"],
+      "#repositories/*":["./src/repositories/*"]
     }
   },
   

@@ -7,6 +7,7 @@ import app from "./app"
 import { connectToMongo } from "#config/db"
 import { logger } from "#config/logger"
 import cluster from "cluster"
+import { redisClient } from "#config/redis"
 
 if(cluster.isPrimary){
     const num=4
@@ -24,6 +25,7 @@ if(cluster.isPrimary){
     
     const start=async()=>{
         await connectToMongo()
+        await redisClient.connect()
         app.listen(PORT, () => {
             logger.info(`Сервер запущен на порту ${PORT}`);
         })

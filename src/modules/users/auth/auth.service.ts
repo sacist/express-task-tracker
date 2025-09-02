@@ -6,6 +6,8 @@ import { jwtRefreshConf, jwtAccessConf } from "#config/jwt";
 import { NotFoundError } from "#errors/not-found.error";
 import { randomUUID } from "crypto";
 import { RefreshToken } from "./tokens.model";
+import { userRepository } from "#repositories/user.repository";
+import { tokenRepository } from "#repositories/token.repository";
 
 interface ILoginReturn{
     accessToken:string,
@@ -21,7 +23,7 @@ export interface IRefreshTokenPayload{
 }
 export class AuthService {
     async login(email: string, password: string):Promise<ILoginReturn> {
-            const user = await User.findOne({ email })
+            const user = await userRepository.findByEmail(email)
             if (!user) {
                 throw new NotFoundError({ text: 'Пользователь с таким email не найден', code: 404 })
             }
@@ -42,8 +44,7 @@ export class AuthService {
             const refreshToken = jwt.sign(refreshPayload, jwtRefreshConf.secret, jwtRefreshConf.options)
             const accessToken = jwt.sign(accessPayload, jwtAccessConf.secret, jwtAccessConf.options)
     
-            const dbToken=await RefreshToken.create({token_id:UUID,user_id:user._id,token:refreshToken})
-            await dbToken.save()
+            await tokenRepository.create({token_id:UUID,user_id:user._id as string,token:refreshToken})
     
             return{accessToken,refreshToken}
     }

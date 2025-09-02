@@ -4,7 +4,7 @@ import { Document, ObjectId, Schema, model } from "mongoose";
 export interface IRefreshToken extends Document {
     token:string,
     token_id:string,
-    user_id:ObjectId
+    user_id:ObjectId|string
 }
 
 const refreshTokenSchema = new Schema<IRefreshToken>({

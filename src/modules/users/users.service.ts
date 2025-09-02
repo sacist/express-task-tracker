@@ -2,6 +2,7 @@ import { ConflictError } from "#errors/conflict.error";
 import { User, IUser, UserRoles } from "./users.model";
 import * as bcrypt from 'bcrypt'
 import { MongoServerError } from "mongodb";
+import { userRepository } from "#repositories/user.repository";
 
 export type UserCreation = Pick<IUser, 'name' | 'password' | 'email'> & {
     passcode?: string
@@ -9,6 +10,7 @@ export type UserCreation = Pick<IUser, 'name' | 'password' | 'email'> & {
 
 
 export class UsersService {
+    private repository=userRepository
     async createUser(data: UserCreation) {
         try {
             let role: UserRoles
@@ -18,12 +20,11 @@ export class UsersService {
                 role = UserRoles.USER
             }
             const hashedPwd = await bcrypt.hash(data.password, 10)
-            const user = new User({
+            const user=await this.repository.create({
                 ...data,
                 password: hashedPwd,
                 role
             })
-            await user.save()
             return user
         } catch (e) {
             const err=e as MongoServerError
