@@ -33,4 +33,4 @@ const teamMemberSchema = new Schema<ITeamMember>({
 }, { timestamps: true }
 )
 
-export const TeamMember = model<ITeamMember>('Team', teamMemberSchema)
+export const TeamMember = model<ITeamMember>('TeamMember', teamMemberSchema)

@@ -1,8 +1,9 @@
 import { BaseController, IValidatedRequest } from "#classes/base-controller"
-import { IRequestWithUser } from "#middleware/auth.middleware"
-import { ITeamMember } from "./team-members.model"
+import { Types } from "mongoose"
+import { ITeamMember, TeamMemberRole } from "./team-members.model"
 import { TeamsService } from "./teams.service"
 import z from "zod"
+import { UnauthorizedError } from "#errors/unauthorized.error"
 
 
 export interface IRequestWithTeamMembership extends IValidatedRequest {
@@ -26,6 +27,21 @@ export class TeamsController extends BaseController {
             throw new Error('middleware failure')
         }
         const res = await this.teamsService.assignTaskToTeamMember(teamMembership, userId, taskId)
+        return res
+    })
+
+    public createTeam=this.run<IValidatedRequest>({
+        body:z.object({
+            name:z.string(),
+            role:z.enum(TeamMemberRole)
+        })
+    },async(req)=>{
+        const {name,role}=req.validatedBody
+        const user=req.user
+        if(!user){
+            throw new UnauthorizedError({text:'Вы не были авторизованы, повторите попытку'})
+        }
+        const res=await this.teamsService.createTeam({name,role,createdBy:new Types.ObjectId(user._id as string)})
         return res
     })
 

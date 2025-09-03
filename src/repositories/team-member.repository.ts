@@ -8,10 +8,12 @@ class TeamMemberRepository extends BaseRepository<ITeamMember> {
     }
 
     async findByUserId(userId: string) {
-        const key = this.getCacheKey(`user:${userId}`);
+        const key = this.getCacheKey(`team:${userId}`);
 
         const cached = await redisClient.get(key);
         if (cached) {
+            console.log('кэш тим юзер');
+            
             const parsed = JSON.parse(cached);
             return parsed.map((doc: any) => this.model.hydrate(doc)) as ITeamMember[];
         }
@@ -29,6 +31,7 @@ class TeamMemberRepository extends BaseRepository<ITeamMember> {
 
         const cached = await redisClient.get(key);
         if (cached) {
+            console.log('кэш тим тимID');
             const parsed = JSON.parse(cached);
             return parsed.map((doc: any) => this.model.hydrate(doc)) as ITeamMember[];
         }

@@ -4,6 +4,7 @@ import { ITeamMember } from "#modules/teams/team-members.model";
 import { teamMemberRepository } from "#repositories/team-member.repository";
 import { ForbiddenError } from "#errors/forbidden.error";
 import { NotFoundError } from "#errors/not-found.error";
+import { ICreateTeamData, teamRepository } from "#repositories/team.repository";
 
 
 
@@ -19,5 +20,9 @@ export class TeamsService {
             throw new NotFoundError({text:'Таск не найден'})
         }
         return updatedTask.save()
+    }
+    async createTeam(data:ICreateTeamData){
+        const team=await teamRepository.create(data)
+        return team
     }
 }
