@@ -15,7 +15,7 @@ class TeamRepository extends BaseRepository<ITeam>{
     async create(data:ICreateTeamData):Promise<ITeam>{
         const {role, ...teamData}=data
         const team=await super.create(teamData)
-        await teamMemberRepository.create({member_id:team.createdBy,team_id:team._id as Types.ObjectId,role:data.role})
+        await teamMemberRepository.createMember({member_id:team.createdBy.toString(),team_id:team._id as string,role:data.role})
         return team
     }
 }

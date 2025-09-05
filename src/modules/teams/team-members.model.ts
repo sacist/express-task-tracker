@@ -33,4 +33,6 @@ const teamMemberSchema = new Schema<ITeamMember>({
 }, { timestamps: true }
 )
 
+teamMemberSchema.index({ team_id: 1, member_id: 1 }, { unique: true })
+
 export const TeamMember = model<ITeamMember>('TeamMember', teamMemberSchema)

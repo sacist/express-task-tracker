@@ -15,7 +15,8 @@
       "#classes/*":["./src/classes/*"],
       "#modules/*":["./src/modules/*"],
       "#errors/*":["./src/errors/*"],
-      "#repositories/*":["./src/repositories/*"]
+      "#repositories/*":["./src/repositories/*"],
+      "#helpers/*":["./src/helpers/*"]
     }
   },
   

@@ -12,20 +12,20 @@ export const roleLevels: Record<string, number> = {
 export const checkTeamRoleMiddleware = (minRoleName: keyof typeof roleLevels) => {
     return async (req: Request, _: Response, next: NextFunction) => {
         try {
-            const userId = (req as any).state.user._id
+            const userId = (req as any).user._id
+            
             const teamId = req.params.teamId || req.query.teamId
-
+            
             if (!teamId) {
                 return next(new ForbiddenError({text: "Не указан teamId"}))
             }
 
             const memberships = await teamMemberRepository.findByUserId(userId)
             const membership = memberships.find((m) => m.team_id.toString() === teamId)
-
+            
             if (!membership) {
                 return next(new ForbiddenError({text: "Вы не состоите в этой команде"}))
             }
-
             const userRole = membership.role;
 
             if (roleLevels[userRole] < roleLevels[minRoleName]) {

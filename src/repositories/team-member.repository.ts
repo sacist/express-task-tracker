@@ -1,10 +1,18 @@
 import { BaseRepository } from "#classes/base-repository";
-import { TeamMember, ITeamMember } from "#modules/teams/team-members.model";
+import { TeamMember, ITeamMember,TeamMemberRole } from "#modules/teams/team-members.model";
 import { redisClient } from "#config/redis";
+import { Types } from "mongoose";
 
 class TeamMemberRepository extends BaseRepository<ITeamMember> {
     constructor() {
         super(TeamMember, "team_member:");
+    }
+
+    private async invalidateMemberCaches(memberId: string, teamId: string) {
+        await Promise.all([
+            redisClient.del(this.getCacheKey(`team:${memberId}`)),
+            redisClient.del(this.getCacheKey(`team:${teamId}`)),
+        ]);
     }
 
     async findByUserId(userId: string) {
@@ -12,8 +20,7 @@ class TeamMemberRepository extends BaseRepository<ITeamMember> {
 
         const cached = await redisClient.get(key);
         if (cached) {
-            console.log('кэш тим юзер');
-            
+            console.log("кэш тим по userId");
             const parsed = JSON.parse(cached);
             return parsed.map((doc: any) => this.model.hydrate(doc)) as ITeamMember[];
         }
@@ -31,7 +38,7 @@ class TeamMemberRepository extends BaseRepository<ITeamMember> {
 
         const cached = await redisClient.get(key);
         if (cached) {
-            console.log('кэш тим тимID');
+            console.log("кэш тим по teamId");
             const parsed = JSON.parse(cached);
             return parsed.map((doc: any) => this.model.hydrate(doc)) as ITeamMember[];
         }
@@ -43,13 +50,26 @@ class TeamMemberRepository extends BaseRepository<ITeamMember> {
 
         return records;
     }
+
+    async createMember(data: { member_id: string; team_id: string; role: TeamMemberRole }) {
+        const record = await this.model.create({
+            member_id: new Types.ObjectId(data.member_id),
+            team_id: new Types.ObjectId(data.team_id),
+            role: data.role,
+        });
+
+        await this.invalidateMemberCaches(data.member_id, data.team_id);
+
+        return record;
+    }
+
     async updateByUserId(userId: string, data: Partial<ITeamMember>): Promise<ITeamMember | null> {
         const result = await this.model
             .findOneAndUpdate({ member_id: userId }, data, { new: true, runValidators: true })
             .exec();
 
         if (result) {
-            await this.invalidateCache(userId);
+            await this.invalidateMemberCaches(userId, result.team_id.toString());
         }
 
         return result;
@@ -61,11 +81,12 @@ class TeamMemberRepository extends BaseRepository<ITeamMember> {
             .exec();
 
         if (result) {
-            await this.invalidateCache(teamId);
+            await this.invalidateMemberCaches(result.member_id.toString(), teamId);
         }
 
         return result;
     }
 }
+
 
 export const teamMemberRepository = new TeamMemberRepository();
