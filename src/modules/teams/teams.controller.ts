@@ -4,7 +4,8 @@ import { ITeamMember, TeamMemberRole } from "./team-members.model"
 import { TeamsService } from "./teams.service"
 import z from "zod"
 import { UnauthorizedError } from "#errors/unauthorized.error"
-
+import { IRequestWithUser } from "#middleware/auth.middleware"
+import { getUserFromRequest } from "#helpers/app"
 
 export interface IRequestWithTeamMembership extends IValidatedRequest {
     teamMembership?: ITeamMember
@@ -24,7 +25,7 @@ export class TeamsController extends BaseController {
         const { taskId, userId } = req.validatedQuery
         const teamMembership = req.teamMembership
         if (!teamMembership) {
-            throw new Error('middleware failure')
+            throw new UnauthorizedError({ text: 'Ошибка авторизации' })
         }
         const res = await this.teamsService.assignTaskToTeamMember(teamMembership, userId, taskId)
         return res
@@ -37,10 +38,7 @@ export class TeamsController extends BaseController {
         })
     }, async (req) => {
         const { name, role } = req.validatedBody
-        const user = req.user
-        if (!user) {
-            throw new UnauthorizedError({ text: 'Вы не были авторизованы, повторите попытку' })
-        }
+        const user = getUserFromRequest(req)
         const res = await this.teamsService.createTeam({ name, role, createdBy: new Types.ObjectId(user._id as string) })
         return res
     })
@@ -50,25 +48,27 @@ export class TeamsController extends BaseController {
             role: z.enum(TeamMemberRole)
         })
     }, async (req) => {
-        const teamMembership=req.teamMembership
-        if(!teamMembership){
-            throw new UnauthorizedError({text:'Ошибка авторизации'})
+        const teamMembership = req.teamMembership
+        if (!teamMembership) {
+            throw new UnauthorizedError({ text: 'Ошибка авторизации' })
         }
-        const {role}=req.validatedQuery
-        const inviteLink=await this.teamsService.createInviteLink(teamMembership,role)
+        const { role } = req.validatedQuery
+        const inviteLink = await this.teamsService.createInviteLink(teamMembership, role)
         return inviteLink
     })
-    public joinTeamViaLink=this.run<IValidatedRequest>({
-        body:z.object({
-            link:z.string()
+    public joinTeamViaLink = this.run<IValidatedRequest>({
+        body: z.object({
+            link: z.string()
         })
-    },async(req)=>{
-        const {link}=req.validatedBody
-        const user=req.user
-        if(!user){
-            throw new UnauthorizedError({ text: 'Вы не были авторизованы, повторите попытку' })
-        }
-        const res=await this.teamsService.joinTeamViaLink(link,user._id as string)
+    }, async (req) => {
+        const { link } = req.validatedBody
+        const user = getUserFromRequest(req)
+        const res = await this.teamsService.joinTeamViaLink(link, user._id as string)
+        return res
+    })
+    public getAllMyTeams = this.run<IRequestWithUser>(null, async (req) => {
+        const user = getUserFromRequest(req)
+        const res=await this.teamsService.getAllUsersTeams(user._id as string)
         return res
     })
 }

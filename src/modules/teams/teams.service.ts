@@ -63,10 +63,19 @@ export class TeamsService {
             if (e.code === 11000) {
                 throw new ForbiddenError({ text: 'Вы уже состоите в этой команде' })
             }
-            console.log(e);
-            
             throw e
         }
-
+    }
+    async getAllUsersTeams(userId:string){
+        const userMemberships=await teamMemberRepository.findByUserId(userId)
+        if(userMemberships.length===0){
+            throw new NotFoundError({text:"Вы не состоите ни в одной команде"})
+        }
+        const res=[]
+        for(const mem of userMemberships){
+            const team=await teamRepository.findById(mem.team_id.toString())
+            res.push({...team?.toJSON(),role:mem.role})
+        }
+        return res
     }
 }

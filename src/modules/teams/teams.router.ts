@@ -7,8 +7,12 @@ import { TeamMemberRole } from "./team-members.model";
 const controller=new TeamsController()
 const teamsRouter=Router()
 
+
+teamsRouter.get('/',authMiddleware,controller.getAllMyTeams)
+
 teamsRouter.post('/tasks/assign',authMiddleware,checkTeamRoleMiddleware(TeamMemberRole.PROJECT),controller.assignTask)
 teamsRouter.post('/',authMiddleware,controller.createTeam)
 teamsRouter.post('/invite',authMiddleware,checkTeamRoleMiddleware(TeamMemberRole.PROJECT),controller.createInviteLink)
 teamsRouter.post('/invite/join',authMiddleware,controller.joinTeamViaLink)
+
 export default teamsRouter

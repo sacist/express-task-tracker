@@ -1,6 +1,5 @@
 import { BaseRepository } from "#classes/base-repository";
 import { Team,ITeam } from "#modules/teams/teams.model";
-import { Types } from "mongoose";
 import { teamMemberRepository } from "./team-member.repository";
 import { TeamMemberRole } from "#modules/teams/team-members.model";
 

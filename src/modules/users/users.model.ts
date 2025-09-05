@@ -1,5 +1,4 @@
-// models/User.ts
-import { Document, Schema, model } from "mongoose";
+import { Document, Schema, model } from "mongoose"
 
 export enum UserRoles {
   USER = 'user',
@@ -31,7 +30,7 @@ const userSchema = new Schema<IUser>({
   },
   password: {
     type: String,
-    required: true, // Исправил опечатку: было "requied"
+    required: true,
     minlength: 8
   },
   role: {
@@ -45,22 +44,22 @@ const userSchema = new Schema<IUser>({
   }
 }, {
   timestamps: true
-});
+})
 
 userSchema.set('toJSON', {
   transform: (doc: Document, ret: Record<string, any>) => {
-    delete ret.password;
-    delete ret.__v;
-    return ret;
+    delete ret.password
+    delete ret.__v
+    return ret
   }
-});
+})
 
 userSchema.set('toObject', {
   transform: (doc: Document, ret: Record<string, any>) => {
-    delete ret.password;
-    delete ret.__v;
-    return ret;
+    delete ret.password
+    delete ret.__v
+    return ret
   }
-});
+})
 
-export const User = model<IUser>('User', userSchema);
+export const User = model<IUser>('User', userSchema)
