@@ -5,7 +5,7 @@ import { TeamsService } from "./teams.service"
 import z from "zod"
 import { UnauthorizedError } from "#errors/unauthorized.error"
 import { IRequestWithUser } from "#middleware/auth.middleware"
-import { getUserFromRequest } from "#helpers/app"
+import { getTeamMembershipFromRequset, getUserFromRequest } from "#helpers/app"
 
 export interface IRequestWithTeamMembership extends IValidatedRequest {
     teamMembership?: ITeamMember
@@ -23,10 +23,7 @@ export class TeamsController extends BaseController {
         })
     }, async (req) => {
         const { taskId, userId } = req.validatedQuery
-        const teamMembership = req.teamMembership
-        if (!teamMembership) {
-            throw new UnauthorizedError({ text: 'Ошибка авторизации' })
-        }
+        const teamMembership = getTeamMembershipFromRequset(req)
         const res = await this.teamsService.assignTaskToTeamMember(teamMembership, userId, taskId)
         return res
     })
@@ -48,10 +45,7 @@ export class TeamsController extends BaseController {
             role: z.enum(TeamMemberRole)
         })
     }, async (req) => {
-        const teamMembership = req.teamMembership
-        if (!teamMembership) {
-            throw new UnauthorizedError({ text: 'Ошибка авторизации' })
-        }
+        const teamMembership = getTeamMembershipFromRequset(req)
         const { role } = req.validatedQuery
         const inviteLink = await this.teamsService.createInviteLink(teamMembership, role)
         return inviteLink

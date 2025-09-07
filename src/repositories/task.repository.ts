@@ -15,10 +15,16 @@ class TaskRepository extends BaseRepository<ITask> {
         super(Task, 'task:')
     }
 
-    private async invalidateUserTasks(userId: string): Promise<void> {
-        const pattern = `${this.cachePrefix}${userId}:*`
+    private async invalidateTaskRelations(task: ITask): Promise<void> {
+        const keysToInvalidate: string[] = []
 
-        invalidateCacheByPattern(pattern)
+        if (task.createdBy) keysToInvalidate.push(this.getCacheKey(String(task.createdBy)))
+        if (task.workedBy) keysToInvalidate.push(this.getCacheKey(String(task.workedBy)))
+        if (task.teamId) keysToInvalidate.push(this.getCacheKey(String(task.teamId)))
+
+        for (const baseKey of keysToInvalidate) {
+            await invalidateCacheByPattern(`${baseKey}:*`)
+        }
     }
 
     async findByUserIdPaginated(
@@ -34,6 +40,8 @@ class TaskRepository extends BaseRepository<ITask> {
 
         const cached = await redisClient.get(key)
         if (cached) {
+            console.log('Сработл кэш по фильтру:', key);
+            
             const parsed = JSON.parse(cached)
             return parsed.map((model: any) => this.model.hydrate(model)) as ITask[]
         }
@@ -43,9 +51,7 @@ class TaskRepository extends BaseRepository<ITask> {
                 ? { createdBy: userId }
                 : { workedBy: userId }
 
-        if (status) {
-            filter.status = status
-        }
+        if (status) filter.status = status
 
         const records = await this.model
             .find(filter)
@@ -60,47 +66,68 @@ class TaskRepository extends BaseRepository<ITask> {
         return records as ITask[]
     }
 
-    private async invalidateTaskUsers(task: ITask): Promise<void> {
-        if (task.workedBy && task.workedBy === task.createdBy) {
-            await this.invalidateUserTasks(String(task.createdBy))
-        } else {
-            if (task.createdBy) {
-                await this.invalidateUserTasks(String(task.createdBy))
-            }
-            if (task.workedBy) {
-                await this.invalidateUserTasks(String(task.workedBy))
-            }
+    async findByTeamIdPaginated(
+        teamId: string,
+        page: number = 1,
+        status?: TaskStatuses
+    ): Promise<ITask[]> {
+        const pageKey = `:page:${page}`
+        const statusKey = status ? `:status:${status}` : ''
+        const key = this.getCacheKey(teamId) + pageKey + statusKey
+
+        const cached = await redisClient.get(key)
+        if (cached) {
+            console.log('Сработл кэш по фильтру:', key);
+            const parsed = JSON.parse(cached)
+            return parsed.map((model: any) => this.model.hydrate(model)) as ITask[]
         }
+
+        const filter: any = { teamId }
+        if (status) filter.status = status
+
+        const records = await this.model
+            .find(filter)
+            .skip((page - 1) * this.tasksPerPage)
+            .limit(this.tasksPerPage)
+            .lean()
+
+        if (records.length > 0) {
+            await redisClient.set(key, JSON.stringify(records), { EX: 3600 })
+        }
+
+        return records as ITask[]
     }
 
-    async create(data: Partial<ITask>,): Promise<ITask> {
-        const result = await this.model.create(data)
-        await this.invalidateTaskUsers(result)
-        return result
+    async create(data: Partial<ITask>): Promise<ITask> {
+        const task = await this.model.create(data)
+        await this.invalidateTaskRelations(task)
+        return task
     }
 
     async update(id: string, data: Partial<ITask>): Promise<ITask | null> {
-        const result = await this.model
+        const updatedTask = await this.model
             .findByIdAndUpdate(
                 id,
                 { ...data, $inc: { __v: 1 } },
                 { new: true, runValidators: true }
-            ).exec()
-        if (result) {
-            await this.invalidateTaskUsers(result)
+            )
+            .exec()
+
+        if (updatedTask) {
+            await this.invalidateTaskRelations(updatedTask)
         }
 
-        return result
+        return updatedTask
     }
 
     async delete(id: string): Promise<ITask | null> {
-        const result = await this.model.findByIdAndDelete(id).exec()
+        const task = await this.model.findByIdAndDelete(id).exec()
 
-        if (result) {
-            await this.invalidateTaskUsers(result)
+        if (task) {
+            await this.invalidateTaskRelations(task)
         }
 
-        return result
+        return task
     }
 }
 
