@@ -7,6 +7,7 @@ import z from "zod"
 import { TaskStatuses } from "./tasks.model"
 import { GetTasksRole } from "#repositories/task.repository"
 import { IValidatedRequest } from "#classes/base-controller"
+import { getUserFromRequest } from "#helpers/app"
 
 export class TasksController extends BaseController {
     private tasksService = new TasksService()
@@ -23,10 +24,10 @@ export class TasksController extends BaseController {
             status: z.enum(["backlog", "in_progress", "in_testing", "done"]).optional()
         })
     }, async (req) => {
-        if (!req.user) throw new UnauthorizedError({ text: "Пользователь не авторизован" })
+        const user=getUserFromRequest(req)
 
         const task = await this.tasksService.createTask({
-            createdBy: req.user._id as Types.ObjectId,
+            createdBy: user._id as Types.ObjectId,
             name: req.validatedBody.name,
             description: req.validatedBody.description,
             completeBy: req.validatedBody.completeBy,
@@ -44,12 +45,29 @@ export class TasksController extends BaseController {
             page: z.string().optional()
         })
     }, async (req) => {
-        if (!req.user) throw new UnauthorizedError({ text: "Пользователь не авторизован" })
+        const user=getUserFromRequest(req)
 
         const { role, status } = req.validatedBody
         const { page } = req.validatedQuery
         const pageNumber = Number(page) || 1
-        const tasks = this.tasksService.getMyTasks(req.user._id as string, pageNumber, role, status)
+        const tasks = this.tasksService.getMyTasks(user._id as string, pageNumber, role, status)
         return tasks
+    })
+    public updateTask=this.run<IValidatedRequest>({
+        query:z.object({
+            taskId:z.string()
+        }),
+        body:z.object({
+            status:z.enum(TaskStatuses),
+            comment:z.string()
+        })
+    },async(req)=>{
+        const user=getUserFromRequest(req)
+        const userId=(user._id as Types.ObjectId).toString()
+        
+        const {taskId}=req.validatedQuery
+        const {status,comment}=req.validatedBody
+        const res=await this.tasksService.updateTask(taskId,status,comment,userId)
+        return res
     })
 }
